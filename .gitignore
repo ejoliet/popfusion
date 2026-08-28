@@ -1,0 +1,6 @@
+/target
+.omc/
+# cullroom rule: iroh secret keys must never be committed
+*.key
+key
+.popfusion/

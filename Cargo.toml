@@ -1,0 +1,43 @@
+[package]
+name = "popfusion"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT"
+description = "SQL over remote Parquet, peer-to-peer. Dial a public key, run a query, fetch only the byte ranges that survive predicate pruning."
+repository = "https://github.com/ejoliet/popfusion"
+
+[dependencies]
+iroh = "1"
+datafusion = "55"
+# AIDEV-NOTE: object_store pinned to the minor DataFusion 55 links against (^0.13.2).
+# A different minor would be a *different trait* from DataFusion's point of view and
+# our IrohObjectStore would not be accepted by SessionContext::register_object_store.
+object_store = { version = "0.13", features = ["aws"] }
+postcard = { version = "1", features = ["use-std"] }
+clap = { version = "4", features = ["derive"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "fs", "io-util", "signal"] }
+tracing = "0.1"
+anyhow = "1"
+thiserror = "2"
+# serde: postcard is serde-native; wire types derive Serialize/Deserialize. A required
+# companion of a listed dep, not a new capability.
+serde = { version = "1", features = ["derive"] }
+# async-trait + bytes + futures + chrono + url: required to *implement*
+# object_store::ObjectStore (its trait is #[async_trait], payloads are Bytes, listings
+# are BoxStream, ObjectMeta.last_modified is chrono::DateTime) and to call DataFusion's
+# register_object_store(&url::Url, ...). Same versions those crates use.
+async-trait = "0.1"
+bytes = "1"
+futures = "0.3"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+url = "2"
+# tracing-subscriber: `tracing` emits nothing without a subscriber; needed for PF_LOG
+# filtering and PF_LOG_FORMAT=json structured server logs (README "Error Handling").
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+[dev-dependencies]
+tempfile = "3"
+
+[profile.release]
+lto = true

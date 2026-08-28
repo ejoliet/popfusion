@@ -253,6 +253,45 @@ cargo clippy -- -D warnings
 | 5 | S3 backend branch on serve side | e2e against LocalStack or `object_store` in-memory double |
 | 6 | Polish: `--stats` output, `ls`, `id`, README Quick Start verified | Bytes-transferred acceptance test passes |
 
+### Usage
+
+```bash
+# 0. build
+cargo build --release
+alias pf=./target/release/popfusion
+
+# 1. data (any dir with .parquet works; quick sample via python/duckdb if you have one)
+mkdir -p /tmp/pfdata   # drop a .parquet file in here
+
+# 2. terminal A — serve (quick demo, no auth)
+pf serve /tmp/pfdata --open
+# → prints: node id: <NODE_ID>
+
+# 3. terminal B — play
+pf ls <NODE_ID>
+pf query <NODE_ID> "SELECT * FROM 'yourfile.parquet' LIMIT 10" --stats
+Proper auth flow (2 machines, or 2 key files on one machine):
+
+# machine B: print pubkey
+pf id                              # → <PUBKEY_B>
+
+# machine A: serve allowlisted
+pf serve /tmp/pfdata --allow <PUBKEY_B>
+
+# machine B: query
+pf query <NODE_ID_A> "SELECT count(*) FROM 'yourfile.parquet'" --stats
+Same-machine with allowlist: give client own key → --secret-key-file /tmp/ck on id/query/ls.
+```
+
+Notes:
+
+- --stats prints transferred: X of Y remote data — the whole point, watch it stay tiny on selective WHERE.
+- S3: pf serve s3://bucket/prefix --allow … (creds from env).
+- Logs: PF_LOG=debug pf serve ….
+- Needs outbound UDP+HTTPS (n0 relays/discovery); no inbound ports.
+- No sample parquet handy? Fastest: python3 -c "import pyarrow as pa, pyarrow.parquet as pq; pq.write_table(pa.table({'x': range(100000)}), '/tmp/pfdata/t.parquet')" — then FROM 't.parquet'.
+
+
 ### Constraints
 
 - Rust 2024 edition; `#![deny(unsafe_code)]`.
