@@ -99,6 +99,42 @@ popfusion/
 
 ---
 
+## Distribution
+
+Single static binary; two channels. Users do **not** need Rust unless they choose the crates.io path.
+
+### Prebuilt binaries (recommended for users)
+
+Releases are automated with [`cargo-dist`](https://opensource.axo.dev/cargo-dist/): pushing a version tag triggers CI that builds macOS (arm64/x86_64), Linux, and Windows binaries, attaches them to a GitHub Release, and generates an installer script.
+
+```bash
+# Install (no Rust required)
+curl -LsSf https://github.com/ejoliet/popfusion/releases/latest/download/popfusion-installer.sh | sh
+```
+
+Maintainer release flow (one-time setup, then per release):
+
+```bash
+# One-time
+cargo install cargo-dist
+dist init                      # writes dist-workspace.toml + .github/workflows/release.yml
+
+# Per release
+cargo set-version 0.2.0        # or edit Cargo.toml
+git commit -am "release: v0.2.0"
+git tag v0.2.0 && git push && git push --tags
+# CI builds all targets and publishes the GitHub Release
+```
+
+### crates.io (users who have Rust)
+
+```bash
+cargo publish                  # maintainer, once per version
+cargo install popfusion        # user; compiles locally (DataFusion is heavy, expect minutes)
+```
+
+---
+
 ## Quick Start
 
 ```bash
